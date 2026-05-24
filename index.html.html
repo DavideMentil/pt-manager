@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PT Manager">
+<meta name="theme-color" content="#0d0d0d">
+<title>PT Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --card: #1e1e1e;
+  --border: #2a2a2a;
+  --text: #ffffff;
+  --muted: #666;
+  --muted2: #999;
+
+  --orange: #FF5E1A;
+  --orange-dim: #cc4b14;
+  --yellow: #FFD500;
+  --green: #00E676;
+  --blue: #2979FF;
+  --pink: #FF4081;
+  --purple: #7C4DFF;
+
+  --nav-h: 64px;
+  --tab-h: 72px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --radius: 20px;
+  --radius-sm: 12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* ── LAYOUT ── */
+#app { display: flex; flex-direction: column; height: 100dvh; }
+
+.topbar {
+  flex-shrink: 0;
+  padding: calc(var(--safe-top) + 12px) calc(var(--safe-r) + 20px) 12px calc(var(--safe-l) + 20px);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.topbar-logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--orange); letter-spacing: 2px; line-height: 1; }
+.topbar-subtitle { font-size: 12px; color: var(--muted2); font-weight: 500; letter-spacing: .5px; }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; }
+
+.content {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 16px calc(var(--safe-r) + 16px) 16px calc(var(--safe-l) + 16px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabbar {
+  flex-shrink: 0;
+  display: flex;
+  padding: 8px calc(var(--safe-r) + 12px) calc(var(--safe-bot) + 8px) calc(var(--safe-l) + 12px);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  gap: 4px;
+}
+.tab-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 8px 4px; border: none; background: none; color: var(--muted);
+  font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: .5px;
+  text-transform: uppercase; border-radius: var(--radius-sm); transition: all .2s; cursor: pointer;
+}
+.tab-btn .tab-icon { font-size: 22px; line-height: 1; transition: transform .2s; }
+.tab-btn.active { color: var(--orange); background: rgba(255,94,26,.1); }
+.tab-btn.active .tab-icon { transform: scale(1.15); }
+
+/* ── VIEWS ── */
+.view { display: none; animation: slideUp .3s ease; }
+.view.active { display: block; }
+@keyframes slideUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+/* ── TYPOGRAPHY ── */
+.section-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px;
+  line-height: 1; margin-bottom: 4px;
+}
+.section-sub { font-size: 13px; color: var(--muted2); font-weight: 400; margin-bottom: 20px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  transition: transform .15s, border-color .15s;
+}
+.card:active { transform: scale(.98); }
+.card.tappable { cursor: pointer; }
+.card.tappable:active { border-color: var(--orange); }
+
+/* ── KPI GRID ── */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.kpi-card {
+  border-radius: var(--radius); padding: 16px 14px;
+  position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content:''; position:absolute; top:-20px; right:-20px;
+  width:80px; height:80px; border-radius:50%; opacity:.15;
+  background: var(--kpi-color);
+}
+.kpi-icon { font-size: 20px; margin-bottom: 6px; }
+.kpi-val { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; color: var(--kpi-color); line-height: 1; }
+.kpi-label { font-size: 11px; color: var(--muted2); font-weight: 500; margin-top: 2px; letter-spacing: .3px; }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif;
+  font-weight: 700; cursor: pointer; transition: all .15s; padding: 12px 20px; font-size: 14px; }
+.btn:active { transform: scale(.96); }
+.btn-orange { background: var(--orange); color: #fff; }
+.btn-orange:active { background: var(--orange-dim); }
+.btn-ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: rgba(255,60,60,.12); color: #ff4444; border: 1px solid rgba(255,60,60,.3); }
+.btn-green  { background: rgba(0,230,118,.12); color: var(--green); border: 1px solid rgba(0,230,118,.3); }
+.btn-full { width: 100%; }
+.btn-sm { padding: 8px 14px; font-size: 12px; }
+.btn-icon { width: 40px; height: 40px; padding: 0; border-radius: 50%; font-size: 18px; background: var(--card); border: 1px solid var(--border); color: var(--text); }
+
+/* ── INPUTS ── */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted2); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
+.inp {
+  width: 100%; background: var(--surface); border: 1.5px solid var(--border); color: var(--text);
+  padding: 13px 14px; border-radius: var(--radius-sm); font-size: 15px; font-family: 'Outfit', sans-serif;
+  outline: none; transition: border-color .2s; -webkit-appearance: none; appearance: none;
+}
+.inp:focus { border-color: var(--orange); }
+.inp::placeholder { color: var(--muted); }
+
+/* ── TAGS / BADGES ── */
+.badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .3px; }
+.badge-red    { background: rgba(255,64,64,.15); color: #ff4444; }
+.badge-yellow { background: rgba(255,213,0,.15); color: var(--yellow); }
+.badge-green  { background: rgba(0,230,118,.15); color: var(--green); }
+.badge-blue   { background: rgba(41,121,255,.15); color: var(--blue); }
+.badge-orange { background: rgba(255,94,26,.15); color: var(--orange); }
+
+/* ── PROGRESS ── */
+.progress-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.progress-bar  { height: 100%; border-radius: 3px; transition: width .5s ease; }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+/* ── OVERLAY / MODAL ── */
+.overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+  align-items: flex-end; justify-content: center;
+}
+.overlay.open { display: flex; }
+.sheet {
+  background: var(--surface); border-radius: 24px 24px 0 0; border: 1px solid var(--border);
+  width: 100%; max-width: 600px;
+  padding: 0 0 calc(var(--safe-bot) + 16px);
+  max-height: 92dvh; display: flex; flex-direction: column;
+  animation: sheetUp .3s cubic-bezier(.25,.8,.25,1);
+}
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
+.sheet-header { padding: 14px 20px 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sheet-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1.5px; flex: 1; }
+.sheet-body { overflow-y: auto; padding: 16px 20px; flex: 1; -webkit-overflow-scrolling: touch; }
+.sheet-footer { padding: 12px 20px 0; flex-shrink: 0; display: flex; gap: 10px; }
+
+/* ── CONFIRM DIALOG ── */
+.confirm-box {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px 20px; margin: auto; width: calc(100% - 40px); max-width: 340px;
+  animation: sheetUp .25s ease;
+}
+.confirm-msg { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.confirm-sub { font-size: 13px; color: var(--muted2); margin-bottom: 20px; line-height: 1.5; }
+
+/* ── CALENDAR ── */
+.cal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cal-month { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; flex: 1; text-align: center; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.cal-dow { text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); padding: 6px 0; letter-spacing: .5px; text-transform: uppercase; }
+.cal-day {
+  aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding: 4px 2px 2px; border-radius: 10px; cursor: pointer; position: relative; transition: background .15s;
+  min-height: 44px;
+}
+.cal-day:active { background: rgba(255,94,26,.15); }
+.cal-day.today .cal-num { background: var(--orange); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+.cal-num { font-size: 13px; font-weight: 600; line-height: 24px; }
+.cal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); margin-top: 2px; }
+.cal-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; margin-top: 1px; }
+
+/* ── AVATAR ── */
+.avatar {
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-weight: 700; flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+/* ── WORKOUT TABLE ── */
+.wtable { width: 100%; border-collapse: collapse; }
+.wtable th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 6px 8px; background: var(--bg); text-align: left; }
+.wtable td { padding: 4px 4px; border-bottom: 1px solid var(--border); }
+.wtable .winp { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 7px 8px; border-radius: 8px; font-size: 13px; font-family: 'Outfit', sans-serif; outline: none; }
+.wtable .winp:focus { border-color: var(--orange); }
+.wtable select.winp { -webkit-appearance: none; }
+
+/* ── LANDSCAPE ── */
+@media (orientation: landscape) and (max-height: 500px) {
+  .topbar { padding-top: calc(var(--safe-top) + 6px); padding-bottom: 6px; }
+  .topbar-logo { font-size: 22px; }
+  .content { padding: 10px 16px; }
+  .tabbar { padding-bottom: calc(var(--safe-bot) + 4px); }
+  .tab-btn { padding: 4px; }
+  .kpi-grid { grid-template-columns: repeat(4,1fr); }
+  .kpi-val { font-size: 24px; }
+  .section-title { font-size: 24px; }
+  .sheet { max-height: 96dvh; border-radius: 16px; }
+}
+
+/* ── UTILITY ── */
+.row { display: flex; align-items: center; gap: 10px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.col { display: flex; flex-direction: column; }
+.gap-8 { gap: 8px; }
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; }
+.text-muted { color: var(--muted2); }
+.text-bold { font-weight: 700; }
+.fw { width: 100%; }
+.overflow-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* install banner */
+.install-banner {
+  background: linear-gradient(135deg, var(--orange), #ff8c00);
+  border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+}
+.install-banner .icon { font-size: 28px; }
+.install-close { margin-left: auto; background: rgba(255,255,255,.2); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">PT MANAGER</div>
+      <div class="topbar-subtitle">Personal Trainer App</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-icon" onclick="openSheet('sheetSettings')" title="Backup">💾</button>
+      <button class="btn btn-icon" onclick="openSheet('sheetLesson')" title="Nuova lezione">🏋️</button>
+      <button class="btn btn-orange btn-sm" onclick="openSheet('sheetClient')" style="border-radius:20px;">+ Cliente</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" id="mainContent">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div id="installBanner"></div>
+      <div class="section-title" id="greetTitle">CIAO! 💪</div>
+      <div class="section-sub" id="greetDate"></div>
+
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="card" style="margin-bottom:12px;">
+        <div class="row-between" style="margin-bottom:12px;">
+          <span style="font-size:14px;font-weight:700;">📅 LEZIONI DI OGGI</span>
+          <span class="badge badge-orange" id="todayCount">0</span>
+        </div>
+        <div id="todayList"><p class="text-sm text-muted">Nessuna lezione oggi</p></div>
+      </div>
+
+      <div class="card">
+        <div class="row-between" style="margin-bottom:12px;">
+          <span style="font-size:14px;font-weight:700;">⚠️ PACCHETTI IN SCADENZA</span>
+        </div>
+        <div id="alertList"><p class="text-sm text-muted">Tutto ok!</p></div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="view" id="view-calendar">
+      <div class="cal-header">
+        <button class="btn btn-icon" id="calPrev">‹</button>
+        <div class="cal-month" id="calTitle"></div>
+        <button class="btn btn-icon" id="calNext">›</button>
+      </div>
+      <div class="card" style="padding:10px;">
+        <div class="cal-grid" id="calDow"></div>
+        <div class="cal-grid" id="calDays" style="gap:3px;margin-top:4px;"></div>
+      </div>
+      <div id="calDayDetail" style="margin-top:4px;"></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="view" id="view-clients">
+      <div class="row-between" style="margin-bottom:14px;">
+        <div>
+          <div class="section-title">CLIENTI</div>
+          <div class="section-sub" id="clientCount">0 clienti</div>
+        </div>
+      </div>
+      <input type="search" class="inp" placeholder="🔍 Cerca cliente…" id="searchInput" style="margin-bottom:12px;" oninput="renderClients()">
+      <div id="clientList"></div>
+    </div>
+
+  </div>
+
+  <!-- TABBAR -->
+  <div class="tabbar">
+    <button class="tab-btn active" data-view="dashboard" onclick="switchView('dashboard',this)">
+      <span class="tab-icon">⚡</span>Dashboard
+    </button>
+    <button class="tab-btn" data-view="calendar" onclick="switchView('calendar',this)">
+      <span class="tab-icon">📅</span>Calendario
+    </button>
+    <button class="tab-btn" data-view="clients" onclick="switchView('clients',this)">
+      <span class="tab-icon">👤</span>Clienti
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════ SHEETS ════════════════════ -->
+
+<!-- NEW CLIENT -->
+<div class="overlay" id="sheetClient">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">NUOVO CLIENTE</div>
+      <button class="btn btn-icon" onclick="closeSheet('sheetClient')">×</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label>Nome e cognome *</label><input class="inp" id="c_name" placeholder="Es. Marco Rossi" autocomplete="off"></div>
+      <div class="field"><label>Telefono</label><input class="inp" id="c_phone" placeholder="+39 333 …" type="tel"></div>
+      <div class="field">
+        <label>Pacchetto *</label>
+        <select class="inp" id="c_pkg">
+          <option value="4x100">4 lezioni – 100 €</option>
+          <option value="10x200">10 lezioni – 200 €</option>
+          <option value="10x250" selected>10 lezioni – 250 €</option>
+          <option value="10x300">10 lezioni – 300 €</option>
+          <option value="12x250">12 lezioni – 250 €</option>
+        </select>
+      </div>
+      <div class="field"><label>Acconto pagato (€)</label><input class="inp" id="c_paid" type="number" placeholder="0" min="0"></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeSheet('sheetClient')">Annulla</button>
+      <button class="btn btn-orange" style="flex:2" onclick="saveClient()">💾 Salva cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW LESSON -->
+<div class="overlay" id="sheetLesson">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">NUOVA LEZIONE</div>
+      <button class="btn btn-icon" onclick="closeSheet('sheetLesson')">×</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label>Cliente *</label><select class="inp" id="l_client"></select></div>
+      <div class="field"><label>Data *</label><input class="inp" id="l_date" type="date"></div>
+      <div class="field"><label>Orario</label><input class="inp" id="l_time" type="time"></div>
+      <div class="field"><label>Note</label><input class="inp" id="l_note" placeholder="Facoltativo…"></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeSheet('sheetLesson')">Annulla</button>
+      <button class="btn btn-orange" style="flex:2" onclick="saveLesson()">💾 Salva lezione</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT DETAIL -->
+<div class="overlay" id="sheetDetail">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="detail_name">CLIENTE</div>
+      <button class="btn btn-icon" onclick="closeSheet('sheetDetail')">×</button>
+    </div>
+    <div class="sheet-body" id="detail_body"></div>
+    <div class="sheet-footer" id="detail_footer"></div>
+  </div>
+</div>
+
+<!-- EDIT PAID -->
+<div class="overlay" id="sheetPaid">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">AGGIORNA PAGAMENTO</div>
+      <button class="btn btn-icon" onclick="closeSheet('sheetPaid')">×</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label>Importo saldato (€)</label><input class="inp" id="paid_val" type="number" min="0"></div>
+      <p class="text-sm text-muted">Totale pacchetto: <strong id="paid_total"></strong></p>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeSheet('sheetPaid')">Annulla</button>
+      <button class="btn btn-orange" style="flex:2" onclick="savePaid()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORKOUT -->
+<div class="overlay" id="sheetWorkout">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="wo_title">SCHEDA</div>
+      <button class="btn btn-icon" onclick="closeSheet('sheetWorkout')">×</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label>Nome scheda</label><input class="inp" id="wo_name" placeholder="Es. Scheda A – Forza"></div>
+      <div class="field"><label>Obiettivo</label><input class="inp" id="wo_goal" placeholder="Es. Ipertrofia, Definizione…"></div>
+      <div class="divider"></div>
+      <div id="wo_exercises"></div>
+      <button class="btn btn-ghost btn-full mt-8" onclick="addWoRow()">+ Aggiungi esercizio</button>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeSheet('sheetWorkout')">Annulla</button>
+      <button class="btn btn-orange" style="flex:2" onclick="saveWorkout()">💾 Salva scheda</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="overlay" id="overlayConfirm">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirm_msg"></div>
+    <div class="confirm-sub" id="confirm_sub"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeSheet('overlayConfirm')">Annulla</button>
+      <button class="btn btn-danger" style="flex:2" id="confirm_ok">Sì, elimina</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAL DAY SHEET -->
+<div class="overlay" id="sheetCalDay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="calDay_title">GIORNO</div>
+      <button class="btn btn-icon" onclick="closeSheet('sheetCalDay')">×</button>
+    </div>
+    <div class="sheet-body" id="calDay_body"></div>
+    <div class="sheet-footer">
+      <button class="btn btn-orange btn-full" id="calDay_add" onclick="">+ Aggiungi lezione</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════
+const PACKAGES = {
+  '4x100':  { label:'4 lezioni – 100 €',  sessions:4,  price:100 },
+  '10x200': { label:'10 lezioni – 200 €', sessions:10, price:200 },
+  '10x250': { label:'10 lezioni – 250 €', sessions:10, price:250 },
+  '10x300': { label:'10 lezioni – 300 €', sessions:10, price:300 },
+  '12x250': { label:'12 lezioni – 250 €', sessions:12, price:250 },
+};
+const MUSCLES = ['Petto','Schiena','Spalle','Bicipiti','Tricipiti','Gambe','Glutei','Addome','Cardio','Full Body','Altro'];
+const AVATAR_COLORS = ['#FF5E1A','#FFD500','#00E676','#2979FF','#FF4081','#7C4DFF','#00BCD4','#FF9800'];
+
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
+// ── STORAGE: prova localStorage, fallback su oggetto in memoria ──
+const _mem = {};
+let _storageOk = false;
+try {
+  localStorage.setItem('__test__','1');
+  if(localStorage.getItem('__test__')==='1'){ localStorage.removeItem('__test__'); _storageOk=true; }
+} catch(e){}
+
+function loadDB(k,fb){
+  try{
+    const src = _storageOk ? localStorage : null;
+    const v = src ? src.getItem(k) : _mem[k];
+    return v ? JSON.parse(v) : fb;
+  }catch{ return fb; }
+}
+function saveDB(k,v){
+  const str = JSON.stringify(v);
+  if(_storageOk){ try{ localStorage.setItem(k,str); }catch(e){ _storageOk=false; _mem[k]=str; } }
+  else { _mem[k]=str; }
+}
+
+let clients  = loadDB('pt_clients',[]);
+let lessons  = loadDB('pt_lessons',[]);
+let workouts = loadDB('pt_workouts',{});
+
+function persist(){
+  saveDB('pt_clients',clients);
+  saveDB('pt_lessons',lessons);
+  saveDB('pt_workouts',workouts);
+}
+
+// Export dati come JSON scaricabile
+function exportData(){
+  const data = JSON.stringify({clients,lessons,workouts,exportedAt:new Date().toISOString()},null,2);
+  const blob = new Blob([data],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='ptmanager-backup-'+todayStr()+'.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Import dati da JSON
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const d = JSON.parse(e.target.result);
+      if(d.clients) clients  = d.clients;
+      if(d.lessons) lessons  = d.lessons;
+      if(d.workouts)workouts = d.workouts;
+      persist();
+      renderDashboard(); renderClients(); renderCalendar();
+      closeSheet('sheetSettings');
+      showToast('✅ Dati importati con successo!');
+    }catch{ showToast('❌ File non valido'); }
+  };
+  reader.readAsText(file);
+}
+
+function getStats(cid){
+  const c = clients.find(x=>x.id===cid);
+  if(!c) return {};
+  const pkg = PACKAGES[c.packageId]||{sessions:0,price:0};
+  const done = lessons.filter(l=>l.clientId===cid && l.date<=todayStr()).length;
+  const remaining = Math.max(0, pkg.sessions - done);
+  const paid = c.paid||0;
+  return { pkg, done, remaining, paid, total:pkg.price, balance:pkg.price-paid };
+}
+
+function avatarColor(name){ return AVATAR_COLORS[(name||'').charCodeAt(0)%AVATAR_COLORS.length]; }
+function initials(name){ return (name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase(); }
+function avatarHTML(name, size=40){
+  const c=avatarColor(name), i=initials(name);
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:${c}22;border:2px solid ${c}55;color:${c};font-size:${size*.36}px;">${i}</div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  SHEETS
+// ══════════════════════════════════════════════════
+function openSheet(id){
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeSheet(id){
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow='';
+}
+// Close on backdrop click
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) closeSheet(o.id); });
+});
+
+// ══════════════════════════════════════════════════
+//  CONFIRM
+// ══════════════════════════════════════════════════
+function askConfirm(msg, sub, onOk){
+  document.getElementById('confirm_msg').textContent = msg;
+  document.getElementById('confirm_sub').textContent = sub||'';
+  const btn = document.getElementById('confirm_ok');
+  btn.onclick = ()=>{ closeSheet('overlayConfirm'); onOk(); };
+  openSheet('overlayConfirm');
+}
+
+// ══════════════════════════════════════════════════
+//  VIEWS
+// ══════════════════════════════════════════════════
+let currentView = 'dashboard';
+function switchView(view, btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  if(btn) btn.classList.add('active');
+  currentView = view;
+  if(view==='dashboard') renderDashboard();
+  if(view==='calendar')  renderCalendar();
+  if(view==='clients')   renderClients();
+}
+
+// ══════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════
+function renderDashboard(){
+  const today = todayStr();
+  // Greeting
+  const h = new Date().getHours();
+  const greet = h<12 ? 'BUONGIORNO' : h<18 ? 'BUON POMERIGGIO' : 'BUONASERA';
+  document.getElementById('greetTitle').textContent = greet+' 💪';
+  document.getElementById('greetDate').textContent = new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const totalRev = clients.reduce((s,c)=>s+(c.paid||0),0);
+  const totalExp = clients.reduce((s,c)=>s+(PACKAGES[c.packageId]?.price||0),0);
+  const todayL   = lessons.filter(l=>l.date===today);
+
+  // KPIs
+  document.getElementById('kpiGrid').innerHTML = [
+    {label:'Clienti',val:clients.length,icon:'👥',color:'var(--blue)'},
+    {label:'Lezioni oggi',val:todayL.length,icon:'🏋️',color:'var(--orange)'},
+    {label:'Incassato',val:'€'+totalRev,icon:'💶',color:'var(--green)'},
+    {label:'Da incassare',val:'€'+(totalExp-totalRev),icon:'⏳',color:'var(--yellow)'},
+  ].map(k=>`
+    <div class="kpi-card" style="background:var(--card);border:1px solid var(--border);--kpi-color:${k.color}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-val" style="color:${k.color}">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>`).join('');
+
+  // Today lessons
+  document.getElementById('todayCount').textContent = todayL.length;
+  if(todayL.length===0){
+    document.getElementById('todayList').innerHTML='<p class="text-sm text-muted">Nessuna lezione oggi</p>';
+  } else {
+    document.getElementById('todayList').innerHTML = todayL.map(l=>{
+      const c=clients.find(x=>x.id===l.clientId);
+      return `<div class="row" style="padding:10px 0;border-bottom:1px solid var(--border);">
+        ${avatarHTML(c?.name||'?',36)}
+        <div style="flex:1">
+          <div class="text-bold" style="font-size:14px;">${c?.name||'Sconosciuto'}</div>
+          ${l.time?`<div class="text-xs text-muted">🕐 ${l.time}</div>`:''}
+        </div>
+        ${l.note?`<div class="text-xs text-muted">${l.note}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // Alerts
+  const alerts = clients.filter(c=>getStats(c.id).remaining<=2);
+  if(alerts.length===0){
+    document.getElementById('alertList').innerHTML='<p class="text-sm text-muted">Tutti i pacchetti sono ok!</p>';
+  } else {
+    document.getElementById('alertList').innerHTML = alerts.map(c=>{
+      const s=getStats(c.id);
+      const bc=s.remaining===0?'badge-red':'badge-yellow';
+      const bt=s.remaining===0?'Esaurito':`${s.remaining} left`;
+      return `<div class="row tappable" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openClientDetail('${c.id}')">
+        ${avatarHTML(c.name,36)}
+        <div style="flex:1">
+          <div class="text-bold" style="font-size:14px;">${c.name}</div>
+          <div class="text-xs text-muted">${s.pkg.label}</div>
+        </div>
+        <span class="badge ${bc}">${bt}</span>
+      </div>`;
+    }).join('');
+  }
+
+  renderInstallBanner();
+}
+
+function renderInstallBanner(){
+  const el = document.getElementById('installBanner');
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if(isInstalled || localStorage.getItem('bannerDismissed')){
+    el.innerHTML=''; return;
+  }
+  el.innerHTML=`<div class="install-banner" onclick="">
+    <span class="icon">📲</span>
+    <div style="flex:1">
+      <div style="font-weight:800;font-size:14px;color:#fff;">Installa su iPhone</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;">Tocca <strong>Condividi</strong> → <strong>"Aggiungi a schermata Home"</strong></div>
+    </div>
+    <button class="install-close" onclick="event.stopPropagation();localStorage.setItem('bannerDismissed','1');renderDashboard();">×</button>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  CLIENTS
+// ══════════════════════════════════════════════════
+function renderClients(){
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const filtered = clients.filter(c=>c.name.toLowerCase().includes(q));
+  document.getElementById('clientCount').textContent = clients.length+' client'+(clients.length===1?'e':'i');
+
+  if(filtered.length===0){
+    document.getElementById('clientList').innerHTML='<p class="text-sm text-muted" style="margin-top:20px;text-align:center;">Nessun cliente trovato</p>';
+    return;
+  }
+  document.getElementById('clientList').innerHTML = filtered.map(c=>{
+    const s=getStats(c.id);
+    const pct=s.total?Math.round((s.paid/s.total)*100):0;
+    const lpct=s.pkg.sessions?Math.round((s.done/s.pkg.sessions)*100):0;
+    const bc=s.remaining===0?'badge-red':s.remaining<=2?'badge-yellow':'badge-green';
+    const bt=s.remaining===0?'Esaurito':`${s.remaining} left`;
+    return `<div class="card tappable" onclick="openClientDetail('${c.id}')">
+      <div class="row" style="margin-bottom:12px;">
+        ${avatarHTML(c.name,44)}
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;">${c.name}</div>
+          <div class="text-xs text-muted" style="margin-top:2px;">${s.pkg.label}</div>
+        </div>
+        <span class="badge ${bc}">${bt}</span>
+      </div>
+      <div class="row-between text-xs text-muted" style="margin-bottom:4px;"><span>Lezioni</span><span>${s.done}/${s.pkg.sessions}</span></div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${lpct}%;background:var(--orange);"></div></div>
+      <div class="row-between text-xs text-muted" style="margin:8px 0 4px;"><span>Pagamento</span><span>€${s.paid}/€${s.total}</span></div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;background:${pct===100?'var(--green)':'var(--yellow)'};"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  CLIENT DETAIL
+// ══════════════════════════════════════════════════
+let detailClientId = null;
+function openClientDetail(cid){
+  detailClientId = cid;
+  const c = clients.find(x=>x.id===cid);
+  if(!c) return;
+  const s = getStats(cid);
+  const pct = s.total?Math.round((s.paid/s.total)*100):0;
+  const wo = workouts[cid]||null;
+  const cLessons = lessons.filter(l=>l.clientId===cid).sort((a,b)=>b.date.localeCompare(a.date));
+
+  document.getElementById('detail_name').textContent = c.name.toUpperCase();
+
+  document.getElementById('detail_body').innerHTML = `
+    <div class="row" style="padding:14px;background:var(--bg);border-radius:14px;margin-bottom:14px;">
+      ${avatarHTML(c.name,52)}
+      <div>
+        <div style="font-size:18px;font-weight:800;">${c.name}</div>
+        ${c.phone?`<div class="text-sm text-muted" style="margin-top:2px;">📞 ${c.phone}</div>`:''}
+        <div class="text-xs text-muted" style="margin-top:2px;">${s.pkg.label}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      ${statBox('Lezioni fatte',s.done,'di '+s.pkg.sessions,'var(--orange)')}
+      ${statBox('Rimanenti',s.remaining,'nel pacchetto',s.remaining===0?'var(--pink)':s.remaining<=2?'var(--yellow)':'var(--green)')}
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="row-between" style="margin-bottom:10px;">
+        <span style="font-weight:700;font-size:14px;">💶 PAGAMENTO</span>
+        <button class="btn btn-ghost btn-sm" onclick="openEditPaid('${cid}')">Modifica</button>
+      </div>
+      <div class="row-between text-sm" style="margin-bottom:6px;"><span class="text-muted">Saldato</span><span style="font-weight:700;color:var(--green);">€ ${s.paid}</span></div>
+      <div class="row-between text-sm" style="margin-bottom:6px;"><span class="text-muted">Totale</span><span style="font-weight:700;">€ ${s.total}</span></div>
+      <div class="row-between text-sm" style="margin-bottom:8px;"><span class="text-muted">Da saldare</span><span style="font-weight:700;color:${s.balance===0?'var(--green)':'var(--yellow)'};">€ ${s.balance}</span></div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;background:${pct===100?'var(--green)':'var(--yellow)'};"></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="row-between">
+        <span style="font-weight:700;font-size:14px;">📋 SCHEDA ALLENAMENTO</span>
+        <button class="btn btn-green btn-sm" onclick="openWorkout('${cid}')">${wo?'✏️ Modifica':'➕ Crea'}</button>
+      </div>
+      ${wo?`<div style="margin-top:10px;">
+        <div class="text-sm text-muted">${wo.name||'Scheda'} · ${(wo.exercises||[]).length} esercizi${wo.goal?' · '+wo.goal:''}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+          ${[...new Set((wo.exercises||[]).map(e=>e.group).filter(Boolean))].map(g=>`<span class="badge badge-orange">${g}</span>`).join('')}
+        </div>
+      </div>`:'<div class="text-xs text-muted" style="margin-top:8px;">Nessuna scheda ancora</div>'}
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px;">🗓 STORICO LEZIONI</div>
+      ${cLessons.length===0
+        ? '<p class="text-sm text-muted">Nessuna lezione registrata</p>'
+        : cLessons.map(l=>`
+          <div class="row" style="padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="flex:1">
+              <div class="text-sm text-bold">${l.date}</div>
+              ${l.time?`<div class="text-xs text-muted">🕐 ${l.time}</div>`:''}
+              ${l.note?`<div class="text-xs text-muted">${l.note}</div>`:''}
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="deleteLesson('${l.id}')">Elimina</button>
+          </div>`).join('')}
+    </div>
+  `;
+
+  document.getElementById('detail_footer').innerHTML = `
+    <button class="btn btn-danger btn-full" onclick="confirmDeleteClient('${cid}')">🗑 Elimina cliente</button>
+  `;
+
+  openSheet('sheetDetail');
+}
+
+function statBox(label, val, sub, color){
+  return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:${color};line-height:1;">${val}</div>
+    <div style="font-size:13px;font-weight:700;margin-top:2px;">${label}</div>
+    <div class="text-xs text-muted">${sub}</div>
+  </div>`;
+}
+
+function deleteLesson(lid){
+  askConfirm('Eliminare questa lezione?','',()=>{
+    lessons = lessons.filter(l=>l.id!==lid);
+    persist();
+    if(detailClientId) openClientDetail(detailClientId);
+    renderDashboard(); renderCalendar();
+  });
+}
+
+function confirmDeleteClient(cid){
+  const c=clients.find(x=>x.id===cid);
+  askConfirm(`Eliminare "${c?.name}"?`,'Verranno cancellate anche tutte le sue lezioni.',()=>{
+    clients = clients.filter(x=>x.id!==cid);
+    lessons = lessons.filter(l=>l.clientId!==cid);
+    delete workouts[cid];
+    persist();
+    closeSheet('sheetDetail');
+    renderDashboard(); renderClients();
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  SAVE CLIENT
+// ══════════════════════════════════════════════════
+function saveClient(){
+  const name = document.getElementById('c_name').value.trim();
+  if(!name){ alert('Inserisci il nome del cliente'); return; }
+  const c = {
+    id:uid(), createdAt:todayStr(),
+    name, phone: document.getElementById('c_phone').value.trim(),
+    packageId: document.getElementById('c_pkg').value,
+    paid: parseFloat(document.getElementById('c_paid').value)||0
+  };
+  clients.push(c); persist();
+  closeSheet('sheetClient');
+  ['c_name','c_phone','c_paid'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c_pkg').value='10x250';
+  renderDashboard(); renderClients();
+}
+
+// ══════════════════════════════════════════════════
+//  SAVE LESSON
+// ══════════════════════════════════════════════════
+function populateLessonClients(preDate, fromDetail=false){
+  lessonFromDetail = fromDetail;
+  const sel = document.getElementById('l_client');
+  sel.innerHTML = clients.length===0
+    ? '<option value="">— Nessun cliente —</option>'
+    : clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  // If opened from a specific client's detail, pre-select that client
+  if(fromDetail && detailClientId){
+    sel.value = detailClientId;
+  }
+  document.getElementById('l_date').value = preDate||todayStr();
+}
+
+// Track whether the lesson sheet was opened from inside a client detail
+let lessonFromDetail = false;
+
+function saveLesson(){
+  const cid = document.getElementById('l_client').value;
+  if(!cid){ alert('Aggiungi prima un cliente!'); return; }
+  const l = {
+    id:uid(), clientId:cid,
+    date: document.getElementById('l_date').value||todayStr(),
+    time: document.getElementById('l_time').value,
+    note: document.getElementById('l_note').value.trim()
+  };
+  lessons.push(l); persist();
+  closeSheet('sheetLesson');
+  closeSheet('sheetCalDay');
+  ['l_time','l_note'].forEach(id=>document.getElementById(id).value='');
+  renderDashboard(); renderCalendar();
+  // Only reopen client detail if the sheet was opened from within that client's detail
+  if(lessonFromDetail && detailClientId === cid){
+    openClientDetail(cid);
+  }
+  lessonFromDetail = false;
+}
+
+// ══════════════════════════════════════════════════
+//  EDIT PAID
+// ══════════════════════════════════════════════════
+function openEditPaid(cid){
+  const c=clients.find(x=>x.id===cid);
+  const s=getStats(cid);
+  document.getElementById('paid_val').value=c.paid||0;
+  document.getElementById('paid_total').textContent='€ '+s.total;
+  openSheet('sheetPaid');
+}
+function savePaid(){
+  const c=clients.find(x=>x.id===detailClientId);
+  if(!c) return;
+  c.paid=parseFloat(document.getElementById('paid_val').value)||0;
+  persist();
+  closeSheet('sheetPaid');
+  openClientDetail(detailClientId);
+  renderDashboard(); renderClients();
+}
+
+// ══════════════════════════════════════════════════
+//  WORKOUT
+// ══════════════════════════════════════════════════
+let woClientId = null;
+let woRows = [];
+
+function openWorkout(cid){
+  woClientId = cid;
+  const c=clients.find(x=>x.id===cid);
+  const wo=workouts[cid]||null;
+  document.getElementById('wo_title').textContent = (c?.name||'').toUpperCase();
+  document.getElementById('wo_name').value=wo?.name||'';
+  document.getElementById('wo_goal').value=wo?.goal||'';
+  woRows = wo?.exercises?.length ? wo.exercises.map(e=>({...e,uid:uid()})) : [newWoRow()];
+  renderWoRows();
+  openSheet('sheetWorkout');
+}
+
+function newWoRow(){ return {uid:uid(),name:'',group:'',sets:'',reps:'',weight:'',note:''}; }
+
+function addWoRow(){
+  woRows.push(newWoRow());
+  renderWoRows();
+}
+
+function renderWoRows(){
+  document.getElementById('wo_exercises').innerHTML = woRows.map((r,i)=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;">
+      <div class="row-between" style="margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;">Esercizio ${i+1}</span>
+        <button onclick="removeWoRow(${i})" style="background:rgba(255,60,60,.12);border:none;color:#ff4444;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">✕ Rimuovi</button>
+      </div>
+      <div class="field" style="margin-bottom:8px;"><label>Nome esercizio</label><input class="inp" style="font-size:14px;" placeholder="Es. Panca piana" value="${r.name}" oninput="woRows[${i}].name=this.value"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div class="field" style="margin-bottom:0;"><label>Gruppo muscolare</label>
+          <select class="inp" style="font-size:13px;" onchange="woRows[${i}].group=this.value">
+            <option value="">—</option>
+            ${MUSCLES.map(m=>`<option value="${m}" ${r.group===m?'selected':''}>${m}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;"><label>Serie</label><input class="inp" style="font-size:14px;" placeholder="4" value="${r.sets}" oninput="woRows[${i}].sets=this.value"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div class="field" style="margin-bottom:0;"><label>Ripetizioni</label><input class="inp" style="font-size:14px;" placeholder="10-12" value="${r.reps}" oninput="woRows[${i}].reps=this.value"></div>
+        <div class="field" style="margin-bottom:0;"><label>Carico (kg)</label><input class="inp" style="font-size:14px;" placeholder="60" value="${r.weight}" oninput="woRows[${i}].weight=this.value"></div>
+      </div>
+      <div class="field" style="margin-bottom:0;"><label>Note / Recupero</label><input class="inp" style="font-size:13px;" placeholder="Es. 90'' recupero" value="${r.note}" oninput="woRows[${i}].note=this.value"></div>
+    </div>
+  `).join('');
+}
+
+function removeWoRow(i){
+  woRows.splice(i,1);
+  if(woRows.length===0) woRows=[newWoRow()];
+  renderWoRows();
+}
+
+function saveWorkout(){
+  workouts[woClientId]={
+    name: document.getElementById('wo_name').value.trim(),
+    goal: document.getElementById('wo_goal').value.trim(),
+    exercises: woRows.map(r=>({name:r.name,group:r.group,sets:r.sets,reps:r.reps,weight:r.weight,note:r.note})),
+    updatedAt: todayStr()
+  };
+  persist();
+  closeSheet('sheetWorkout');
+  openClientDetail(woClientId);
+}
+
+// ══════════════════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════════════════
+const MONTHS_IT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+let calYear, calMonth;
+const now = new Date();
+calYear=now.getFullYear(); calMonth=now.getMonth();
+
+document.getElementById('calPrev').onclick=()=>{
+  calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar();
+};
+document.getElementById('calNext').onclick=()=>{
+  calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar();
+};
+
+function renderCalendar(){
+  document.getElementById('calTitle').textContent = MONTHS_IT[calMonth]+' '+calYear;
+  const dows=['L','M','M','G','V','S','D'];
+  document.getElementById('calDow').innerHTML = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  const days    = new Date(calYear,calMonth+1,0).getDate();
+  const rawFirst = new Date(calYear,calMonth,1).getDay(); // 0=Sun
+  const offset  = (rawFirst+6)%7; // Mon=0
+  const today   = todayStr();
+  const monthStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+  const mLessons = lessons.filter(l=>l.date.startsWith(monthStr));
+
+  let html = Array.from({length:offset}).map(()=>`<div></div>`).join('');
+  for(let d=1;d<=days;d++){
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dL = mLessons.filter(l=>l.date===ds);
+    const isT = ds===today;
+    html+=`<div class="cal-day${isT?' today':''}" onclick="openCalDay('${ds}')">
+      <span class="cal-num">${d}</span>
+      ${dL.length>0?`<div class="cal-dots">${dL.map(()=>`<div class="cal-dot"></div>`).join('')}</div>`:''}
+    </div>`;
+  }
+  document.getElementById('calDays').innerHTML=html;
+}
+
+function openCalDay(ds){
+  const dLessons = lessons.filter(l=>l.date===ds);
+  const formatted = new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('calDay_title').textContent = formatted.toUpperCase();
+
+  document.getElementById('calDay_body').innerHTML = dLessons.length===0
+    ? '<p class="text-sm text-muted">Nessuna lezione in questo giorno.</p>'
+    : dLessons.map(l=>{
+        const c=clients.find(x=>x.id===l.clientId);
+        return `<div class="row" style="padding:12px 0;border-bottom:1px solid var(--border);">
+          ${avatarHTML(c?.name||'?',36)}
+          <div style="flex:1">
+            <div class="text-bold">${c?.name||'Sconosciuto'}</div>
+            ${l.time?`<div class="text-xs text-muted">🕐 ${l.time}</div>`:''}
+            ${l.note?`<div class="text-xs text-muted">${l.note}</div>`:''}
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteLesson('${l.id}')">✕</button>
+        </div>`;
+      }).join('');
+
+  document.getElementById('calDay_add').onclick = ()=>{
+    populateLessonClients(ds, false);
+    closeSheet('sheetCalDay');
+    openSheet('sheetLesson');
+  };
+  openSheet('sheetCalDay');
+}
+
+// ── TOAST ──────────────────────────────────────────
+function showToast(msg, duration=2800){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style,{
+    position:'fixed',bottom:'calc(env(safe-area-inset-bottom,0px) + 90px)',left:'50%',
+    transform:'translateX(-50%) translateY(20px)',
+    background:'#222',color:'#fff',padding:'12px 22px',borderRadius:'24px',
+    fontSize:'14px',fontWeight:'600',zIndex:'9999',
+    boxShadow:'0 4px 24px rgba(0,0,0,.5)',
+    opacity:'0',transition:'all .3s',whiteSpace:'nowrap',
+    border:'1px solid #333',fontFamily:"'Outfit',sans-serif",
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>{ t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(10px)'; setTimeout(()=>t.remove(),400); }, duration);
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+function init(){
+  renderDashboard();
+  renderCalendar();
+
+  // Topbar "+ Lezione" button — NOT from a client detail
+  document.querySelector('[onclick="openSheet(\'sheetLesson\')"]').addEventListener('click',()=>{
+    detailClientId = null;
+    populateLessonClients(null, false);
+  });
+
+  // Show storage warning if localStorage not available
+  if(!_storageOk){
+    setTimeout(()=>{
+      showToast('⚠️ Salvataggio limitato: usa Backup per non perdere i dati',5000);
+    },1200);
+  }
+}
+
+init();
+</script>
+<!-- SETTINGS / BACKUP -->
+<div class="overlay" id="sheetSettings">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">💾 BACKUP DATI</div>
+      <button class="btn btn-icon" onclick="closeSheet('sheetSettings')">×</button>
+    </div>
+    <div class="sheet-body">
+      <div id="storageStatus" style="margin-bottom:16px;"></div>
+
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">📤 Esporta dati</div>
+        <div class="text-sm text-muted" style="margin-bottom:12px;">Scarica un file JSON con tutti i tuoi clienti, lezioni e schede. Tienilo come backup!</div>
+        <button class="btn btn-orange btn-full" onclick="exportData()">Scarica backup .json</button>
+      </div>
+
+      <div class="card">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">📥 Importa dati</div>
+        <div class="text-sm text-muted" style="margin-bottom:12px;">Ripristina un backup precedente. <strong style="color:var(--yellow);">Attenzione: sovrascrive i dati attuali.</strong></div>
+        <label class="btn btn-ghost btn-full" style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
+          📂 Scegli file backup
+          <input type="file" accept=".json" style="display:none;" onchange="importData(this.files[0])">
+        </label>
+      </div>
+
+      <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:12px;border:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">💡 Come funziona il salvataggio</div>
+        <div class="text-sm text-muted" style="line-height:1.6;">
+          L'app salva i dati nel browser. Per non perderli:<br>
+          <strong style="color:var(--text);">1.</strong> Installa l'app su iPhone (Condividi → Aggiungi a schermata Home)<br>
+          <strong style="color:var(--text);">2.</strong> Fai un backup periodico con il tasto qui sopra
+        </div>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost btn-full" onclick="closeSheet('sheetSettings')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateStorageStatus(){
+  const el = document.getElementById('storageStatus');
+  if(!el) return;
+  const n = clients.length;
+  const l = lessons.length;
+  if(_storageOk){
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);border-radius:12px;">
+      <span style="font-size:20px;">✅</span>
+      <div><div style="font-size:13px;font-weight:700;color:var(--green);">Salvataggio automatico attivo</div>
+      <div class="text-xs text-muted">${n} client${n!==1?'i':'e'} · ${l} lezioni salvate</div></div>
+    </div>`;
+  } else {
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,94,26,.1);border:1px solid rgba(255,94,26,.4);border-radius:12px;">
+      <span style="font-size:20px;">⚠️</span>
+      <div><div style="font-size:13px;font-weight:700;color:var(--orange);">Salvataggio limitato</div>
+      <div class="text-xs text-muted">Installa l'app o usa il backup manuale</div></div>
+    </div>`;
+  }
+}
+document.getElementById('sheetSettings').addEventListener('transitionend',()=>updateStorageStatus());
+document.getElementById('sheetSettings').addEventListener('click',e=>{
+  if(e.target===document.getElementById('sheetSettings')) closeSheet('sheetSettings');
+});
+</script>
+
+</body>
+</html>
